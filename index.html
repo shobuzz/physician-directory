@@ -296,7 +296,7 @@
 
 <script>
 const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUHCOTLplXgHzJ9GnpiwU52zVkE38in2OMUHWjtltFbCYup9UvTTbhhjIi_ctUpM5HqOuSpNCvDDbu/pub?gid=1848910370&single=true&output=csv";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1-j-wIPr6WEX5nlJV54-s39LwPDQV_v4l5VR4K83rrixAnDr2phK_0ttPIfY4cR28ew/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxOqxXEV9SRR3J5VRjlW9IqulrSS2_5u9DlZ4Wj7LBncnPnWNQ-XCGaz6G3G5T-mbk1yQ/exec";
 
 const PROXIES = [
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -335,12 +335,13 @@ function parseCSV(text) {
   });
 }
 
-function normalizeDoctor(raw) {
+function normalizeDoctor(raw, rowIndex) {
   return {
     name:   (raw["physician name"] || raw["name"]   || "").trim(),
     cell:   (raw["phone number"]   || raw["cell"]   || raw["phone"]  || "").trim(),
     office: (raw["office number"]  || raw["office"] || "").trim(),
     group:  (raw["physician group"]|| raw["group"]  || "").trim(),
+    rowIndex: rowIndex  // 1-based sheet row (row 1 = header, row 2 = first doctor)
   };
 }
 
@@ -364,7 +365,7 @@ async function loadData(manual = false) {
 
   const text = await tryFetch(SHEET_CSV + "&t=" + Date.now());
   if (text) {
-    const parsed = parseCSV(text).map(normalizeDoctor).filter(d => d.name);
+    const parsed = parseCSV(text).map((raw, i) => normalizeDoctor(raw, i + 1)).filter(d => d.name);
     if (parsed.length > 0) {
       doctors = parsed;
       const t = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -787,7 +788,8 @@ async function proceedDelete() {
   try {
     const params = new URLSearchParams({
       action: "delete",
-      name: doc.name
+      name: doc.name,
+      rowIndex: doc.rowIndex || ""
     });
     await fetch(APPS_SCRIPT_URL + "?" + params.toString(), {
       method: "GET",
@@ -839,7 +841,7 @@ async function saveEdit() {
       method: "POST",
       mode: "no-cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "update", originalName, name, cell, office, group })
+      body: JSON.stringify({ action: "update", originalName, name, cell, office, group, rowIndex: doctors[doctors.findIndex(d => d.name === originalName)]?.rowIndex || "" })
     });
 
     // Update local list immediately
