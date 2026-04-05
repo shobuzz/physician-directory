@@ -24,7 +24,6 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; }
 
-  /* ── Header ── */
   .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: calc(var(--safe-top) + 16px) 20px 16px; position: sticky; top: 0; z-index: 100; }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; }
@@ -35,7 +34,6 @@
   .refresh-btn.spinning svg { animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Search ── */
   .search-wrap { position: relative; }
   .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text3); pointer-events: none; }
   .search-input { width: 100%; padding: 11px 36px 11px 38px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); outline: none; transition: border-color 0.15s; }
@@ -44,23 +42,18 @@
   .clear-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--text3); border: none; color: white; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; cursor: pointer; display: none; align-items: center; justify-content: center; }
   .clear-btn.visible { display: flex; }
 
-  /* ── Status ── */
   .status-bar { display: flex; align-items: center; gap: 7px; padding: 10px 20px 0; font-size: 12px; color: var(--text3); }
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.4s; }
   .status-dot.live { background: #276749; }
   .status-dot.cached { background: #e67e22; }
 
-  /* ── Filters ── */
   .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px 0; scrollbar-width: none; }
   .filters::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .chip.active { background: var(--accent); border-color: var(--accent); color: white; }
 
-  /* ── List ── */
   .list-wrap { padding: 14px 16px calc(var(--safe-bot) + 80px); display: flex; flex-direction: column; gap: 10px; }
-  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); padding: 2px 4px 8px; }
 
-  /* ── Card ── */
   .doc-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: transform 0.12s; animation: fadeUp 0.3s both; }
   .doc-card:active { transform: scale(0.985); }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -73,31 +66,18 @@
   .chevron { color: var(--text3); flex-shrink: 0; transition: transform 0.2s; }
   .card-expanded .chevron { transform: rotate(90deg); }
 
-  /* ── Action buttons ── */
   .card-actions { display: none; border-top: 1px solid var(--border); padding: 12px 14px; flex-direction: column; gap: 8px; }
   .card-expanded .card-actions { display: flex; }
-
-  /* Row 1: cell call + text */
   .actions-row { display: flex; gap: 8px; }
-
-  .action-btn {
-    flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
-    padding: 11px 8px; border-radius: var(--radius-sm); border: none;
-    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
-    cursor: pointer; text-decoration: none; transition: opacity 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
+  .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 8px; border-radius: var(--radius-sm); border: none; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; }
   .action-btn:active { transform: scale(0.97); opacity: 0.85; }
-
-  .btn-call   { background: var(--green-bg);  color: var(--green); }
-  .btn-text   { background: var(--purple-bg); color: var(--purple); }
-  .btn-office { background: var(--slate-bg);  color: var(--slate); }
-
+  .btn-call { background: var(--green-bg); color: var(--green); }
+  .btn-text { background: var(--purple-bg); color: var(--purple); }
+  .btn-office { background: var(--slate-bg); color: var(--slate); }
   .btn-label { display: flex; flex-direction: column; align-items: flex-start; }
   .btn-title { font-size: 13px; font-weight: 600; line-height: 1.2; }
-  .btn-num   { font-family: 'DM Mono', monospace; font-weight: 400; font-size: 10px; opacity: 0.65; margin-top: 1px; }
+  .btn-num { font-family: 'DM Mono', monospace; font-weight: 400; font-size: 10px; opacity: 0.65; margin-top: 1px; }
 
-  /* ── Skeleton ── */
   .skeleton-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; display: flex; align-items: center; gap: 14px; animation: fadeUp 0.3s both; }
   .skel { background: var(--surface2); border-radius: 6px; animation: pulse 1.4s ease-in-out infinite; }
   .skel-avatar { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
@@ -105,18 +85,17 @@
   .skel-a { height: 14px; width: 50%; } .skel-b { height: 12px; width: 35%; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.45} }
 
-  /* ── Empty ── */
   .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
   .empty-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
   .empty-text { font-size: 15px; margin-bottom: 4px; color: var(--text2); }
   .empty-sub { font-size: 13px; line-height: 1.6; }
 
-  /* ── Bottom bar ── */
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); padding: 2px 4px 8px; }
+
   .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 20px calc(var(--safe-bot) + 12px); display: flex; align-items: center; justify-content: center; gap: 6px; }
   .bottom-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--border); }
   .bottom-text { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
 
-  /* ── Install banner ── */
   .install-banner { background: var(--accent); color: white; padding: 12px 20px; font-size: 13px; line-height: 1.4; display: none; align-items: center; justify-content: space-between; gap: 12px; }
   .install-banner.show { display: flex; }
   .install-banner button { background: white; color: var(--accent); border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
@@ -174,7 +153,7 @@
 </div>
 
 <script>
-const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRAqlXCKxIipaUdPFoIdVnFzX4W8IBUEBQQRes1zu0ucWPILijswuxN1ZqZvQ2fLQ/pub?gid=1848910370&single=true&output=csv";
+const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUHCOTLplXgHzJ9GnpiwU52zVkE38in2OMUHWjtltFbCYup9UvTTbhhjIi_ctUpM5HqOuSpNCvDDbu/pub?gid=1848910370&single=true&output=csv";
 
 const PROXIES = [
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -301,7 +280,6 @@ function getFiltered() {
   });
 }
 
-// SVG icons
 const iconPhone = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.27 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.18 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.15a16 16 0 0 0 5.94 5.94l1.42-1.42a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 14.92z"/></svg>`;
 const iconSMS  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
 const iconDesk = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>`;
@@ -343,24 +321,17 @@ function render() {
     const card = document.createElement("div");
     card.className = "doc-card" + (expanded ? " card-expanded" : "");
     card.style.animationDelay = (i * 35) + "ms";
-
-    const hasCell   = doc.cell.length > 3;
+    const hasCell = doc.cell.length > 3;
     const hasOffice = doc.office.length > 3;
 
-    // Row 1: Call cell + Text cell
-    const row1 = hasCell
-      ? `<div class="actions-row">
-          ${makeBtn("btn-call", "tel:" + doc.cell,  iconPhone, "Call cell",  doc.cell)}
-          ${makeBtn("btn-text", "sms:" + doc.cell,  iconSMS,   "Text cell",  doc.cell)}
-         </div>`
-      : "";
+    const row1 = hasCell ? `<div class="actions-row">
+      ${makeBtn("btn-call",  "tel:" + doc.cell, iconPhone, "Call cell",  doc.cell)}
+      ${makeBtn("btn-text",  "sms:" + doc.cell, iconSMS,   "Text cell",  doc.cell)}
+    </div>` : "";
 
-    // Row 2: Call office (full width if only one)
-    const row2 = hasOffice
-      ? `<div class="actions-row">
-          ${makeBtn("btn-office", "tel:" + doc.office, iconDesk, "Call office", doc.office)}
-         </div>`
-      : "";
+    const row2 = hasOffice ? `<div class="actions-row">
+      ${makeBtn("btn-office", "tel:" + doc.office, iconDesk, "Call office", doc.office)}
+    </div>` : "";
 
     card.innerHTML = `
       <div class="card-main" onclick="toggleCard(${ri})">
@@ -371,11 +342,7 @@ function render() {
         </div>
         <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="card-actions">
-        ${row1}
-        ${row2}
-      </div>`;
-
+      <div class="card-actions">${row1}${row2}</div>`;
     wrap.appendChild(card);
   });
 
