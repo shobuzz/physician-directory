@@ -229,6 +229,35 @@
   </div>
 </div>
 
+<!-- Edit Doctor Drawer -->
+<div class="drawer-overlay" id="editOverlay" onclick="closeEdit()"></div>
+<div class="drawer" id="editDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">Edit physician</div>
+  <input type="hidden" id="e-original-name">
+  <div class="field">
+    <label>Physician name</label>
+    <input type="text" id="e-name" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Cell number</label>
+    <input type="tel" id="e-cell" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Office number</label>
+    <input type="tel" id="e-office" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Physician group</label>
+    <input type="text" id="e-group" autocomplete="off">
+  </div>
+  <button class="submit-btn" id="editSaveBtn" onclick="saveEdit()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+    Save changes
+  </button>
+  <div class="form-status" id="editStatus"></div>
+</div>
+
 <!-- Contacts picker -->
 <div class="drawer-overlay" id="contactsOverlay" onclick="closeContacts()"></div>
 <div class="drawer" id="contactsDrawer">
@@ -245,7 +274,7 @@
 
 <script>
 const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUHCOTLplXgHzJ9GnpiwU52zVkE38in2OMUHWjtltFbCYup9UvTTbhhjIi_ctUpM5HqOuSpNCvDDbu/pub?gid=1848910370&single=true&output=csv";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqTIP_TLJjaNkukoSjRBTMsGvPIpbfE2sJqGcXag86xCaAkAjHThTNYFTmRFDT1QG2Ig/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2dBovu-6JS562uWTXr6VOqmEnLkFc6vchT-FLbcWo8nAEpG29pKMjc1UX9TzbV3yunQ/exec";
 
 const PROXIES = [
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -461,7 +490,15 @@ function render() {
         </div>
         <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="card-actions">${row1}${row2}</div>`;
+      <div class="card-actions">
+        ${row1}${row2}
+        <div class="actions-row">
+          <button class="action-btn" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)" onclick="openEdit(${ri})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <span class="btn-label"><span class="btn-title">Edit</span></span>
+          </button>
+        </div>
+      </div>`;
     wrap.appendChild(card);
   });
 
@@ -677,6 +714,73 @@ function closeContacts() {
   document.getElementById("contactsOverlay").classList.remove("open");
   document.getElementById("contactsStatus").textContent = "";
   selectedContacts = new Set();
+}
+
+// ── Edit Doctor ──
+function openEdit(index) {
+  const doc = doctors[index];
+  document.getElementById("e-original-name").value = doc.name;
+  document.getElementById("e-name").value = doc.name;
+  document.getElementById("e-cell").value = doc.cell;
+  document.getElementById("e-office").value = doc.office;
+  document.getElementById("e-group").value = doc.group;
+  document.getElementById("editStatus").textContent = "";
+  document.getElementById("editStatus").className = "form-status";
+  document.getElementById("editOverlay").classList.add("open");
+  document.getElementById("editDrawer").classList.add("open");
+  expandedIndex = -1;
+}
+
+function closeEdit() {
+  document.getElementById("editDrawer").classList.remove("open");
+  document.getElementById("editOverlay").classList.remove("open");
+}
+
+async function saveEdit() {
+  const originalName = document.getElementById("e-original-name").value;
+  const name   = document.getElementById("e-name").value.trim();
+  const cell   = document.getElementById("e-cell").value.trim();
+  const office = document.getElementById("e-office").value.trim();
+  const group  = document.getElementById("e-group").value.trim();
+
+  if (!name) { 
+    setEditStatus("Please enter a physician name.", "error"); 
+    return; 
+  }
+
+  const btn = document.getElementById("editSaveBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving…";
+
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "update", originalName, name, cell, office, group })
+    });
+
+    // Update local list immediately
+    const idx = doctors.findIndex(d => d.name === originalName);
+    if (idx !== -1) {
+      doctors[idx] = { name, cell, office, group };
+    }
+
+    setEditStatus("Saved successfully!", "success");
+    setTimeout(() => { closeEdit(); render(); }, 1200);
+
+  } catch(e) {
+    setEditStatus("Something went wrong. Please try again.", "error");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Save changes";
+}
+
+function setEditStatus(msg, type) {
+  const el = document.getElementById("editStatus");
+  el.textContent = msg;
+  el.className = "form-status" + (type ? " " + type : "");
 }
 
 setInterval(loadData, 5 * 60 * 1000);
