@@ -135,6 +135,15 @@
   .install-banner { background: #005030; color: white; padding: 12px 20px; font-size: 13px; line-height: 1.4; display: none; align-items: center; justify-content: space-between; gap: 12px; }
   .install-banner.show { display: flex; }
   .install-banner button { background: white; color: var(--accent); border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: none; align-items: center; justify-content: center; padding: 20px; min-height: 100dvh; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: var(--surface); border-radius: var(--radius); padding: 24px 20px 20px; width: 100%; max-width: 320px; text-align: center; }
+  .confirm-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+  .confirm-msg { font-size: 14px; color: var(--text2); margin-bottom: 20px; line-height: 1.5; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btn { flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .confirm-btn-cancel { background: var(--surface2); color: var(--text2); }
+  .confirm-btn-delete { background: #E24B4A; color: white; }
 </style>
 </head>
 <body>
@@ -231,6 +240,18 @@
 </div>
 
 <!-- Edit Doctor Drawer -->
+<!-- Custom confirm dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-title">Delete physician</div>
+    <div class="confirm-msg" id="confirmMsg"></div>
+    <div class="confirm-btns">
+      <button class="confirm-btn confirm-btn-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="confirm-btn confirm-btn-delete" onclick="proceedDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="drawer-overlay" id="editOverlay" onclick="closeEdit()"></div>
 <div class="drawer" id="editDrawer">
   <div class="drawer-handle"></div>
@@ -731,16 +752,26 @@ function closeContacts() {
 }
 
 // ── Delete Doctor ──
+let pendingDeleteIndex = -1;
+
 function confirmDelete(index) {
   const doc = doctors[index];
-  const name = doc.name;
-  if (confirm("Delete Dr. " + name + " from the directory?\n\nThis cannot be undone.")) {
-    deleteDoctor(index);
-  }
+  pendingDeleteIndex = index;
+  document.getElementById("confirmMsg").textContent = "Remove Dr. " + doc.name + " from the directory? This cannot be undone.";
+  document.getElementById("confirmOverlay").classList.add("open");
 }
 
-async function deleteDoctor(index) {
+function closeConfirm() {
+  document.getElementById("confirmOverlay").classList.remove("open");
+  pendingDeleteIndex = -1;
+}
+
+async function proceedDelete() {
+  closeConfirm();
+  if (pendingDeleteIndex === -1) return;
+  const index = pendingDeleteIndex;
   const doc = doctors[index];
+
   try {
     await fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -749,7 +780,6 @@ async function deleteDoctor(index) {
       body: JSON.stringify({ action: "delete", name: doc.name })
     });
 
-    // Remove from local list immediately
     doctors.splice(index, 1);
     expandedIndex = -1;
     render();
