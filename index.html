@@ -274,7 +274,7 @@
 
 <script>
 const SHEET_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTUHCOTLplXgHzJ9GnpiwU52zVkE38in2OMUHWjtltFbCYup9UvTTbhhjIi_ctUpM5HqOuSpNCvDDbu/pub?gid=1848910370&single=true&output=csv";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2dBovu-6JS562uWTXr6VOqmEnLkFc6vchT-FLbcWo8nAEpG29pKMjc1UX9TzbV3yunQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1-j-wIPr6WEX5nlJV54-s39LwPDQV_v4l5VR4K83rrixAnDr2phK_0ttPIfY4cR28ew/exec";
 
 const PROXIES = [
   url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -496,6 +496,10 @@ function render() {
           <button class="action-btn" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border)" onclick="openEdit(${ri})">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             <span class="btn-label"><span class="btn-title">Edit</span></span>
+          </button>
+          <button class="action-btn" style="background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1" onclick="confirmDelete(${ri})">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <span class="btn-label"><span class="btn-title">Delete</span></span>
           </button>
         </div>
       </div>`;
@@ -723,6 +727,35 @@ function closeContacts() {
   document.getElementById("contactsOverlay").classList.remove("open");
   document.getElementById("contactsStatus").textContent = "";
   selectedContacts = new Set();
+}
+
+// ── Delete Doctor ──
+function confirmDelete(index) {
+  const doc = doctors[index];
+  const name = doc.name;
+  if (confirm("Delete Dr. " + name + " from the directory?\n\nThis cannot be undone.")) {
+    deleteDoctor(index);
+  }
+}
+
+async function deleteDoctor(index) {
+  const doc = doctors[index];
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delete", name: doc.name })
+    });
+
+    // Remove from local list immediately
+    doctors.splice(index, 1);
+    expandedIndex = -1;
+    render();
+
+  } catch(e) {
+    alert("Could not delete. Please try again.");
+  }
 }
 
 // ── Edit Doctor ──
