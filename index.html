@@ -603,6 +603,7 @@ async function importSelectedContacts() {
 
   const toImport = [...selectedContacts].map(i => allContacts[i]);
   let success = 0;
+  const newDoctors = [];
 
   for (const c of toImport) {
     const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
@@ -619,17 +620,29 @@ async function importSelectedContacts() {
         })
       });
       success++;
+      // Add to local list immediately so it appears right away
+      newDoctors.push({
+        name: name,
+        cell: c.phone || "",
+        office: "",
+        group: c.organization || ""
+      });
     } catch(e) { continue; }
   }
 
+  // Inject new doctors into the live list immediately — no waiting for sheet cache
+  if (newDoctors.length > 0) {
+    doctors = [...doctors, ...newDoctors];
+    render();
+  }
+
   const statusEl = document.getElementById("contactsStatus");
-  statusEl.textContent = success + " contact" + (success !== 1 ? "s" : "") + " imported successfully!";
+  statusEl.textContent = success + " contact" + (success !== 1 ? "s" : "") + " added to directory!";
   statusEl.className = "form-status success";
 
   setTimeout(() => {
     closeContacts();
-    loadData(true);
-  }, 1800);
+  }, 1500);
 }
 
 function closeContacts() {
