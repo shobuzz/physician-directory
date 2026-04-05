@@ -224,6 +224,28 @@
     Add to directory
   </button>
   <div class="form-status" id="formStatus"></div>
+
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:500">Or import from iPhone contacts</p>
+    <button class="submit-btn" style="background:#5B3FA6;margin-top:0" onclick="importFromContacts()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Import from iPhone contacts
+    </button>
+  </div>
+</div>
+
+<!-- Contacts picker -->
+<div class="drawer-overlay" id="contactsOverlay" onclick="closeContacts()"></div>
+<div class="drawer" id="contactsDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">Select contacts to import</div>
+  <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Tap to select, then tap Import selected.</p>
+  <div id="contactsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:50dvh;overflow-y:auto"></div>
+  <button class="submit-btn" id="contactsImportBtn" onclick="importSelectedContacts()" style="opacity:0.5" disabled>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    Import selected
+  </button>
+  <div class="form-status" id="contactsStatus"></div>
 </div>
 
 <script>
@@ -516,6 +538,110 @@ function setFormStatus(msg, type) {
   const el = document.getElementById("formStatus");
   el.textContent = msg;
   el.className = "form-status" + (type ? " " + type : "");
+}
+
+// ── Contacts Import ──
+let allContacts = [];
+let selectedContacts = new Set();
+
+function importFromContacts() {
+  closeDrawer();
+  // Tell Swift to request contacts access and fetch contacts
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.importContacts) {
+    window.webkit.messageHandlers.importContacts.postMessage("fetch");
+  } else {
+    alert("Contacts import is only available in the native iOS app.");
+  }
+}
+
+// Called by Swift with the contacts array
+function receiveContacts(contacts) {
+  allContacts = contacts.filter(c => c.firstName || c.lastName);
+  selectedContacts = new Set();
+  renderContactsList();
+  document.getElementById("contactsOverlay").classList.add("open");
+  document.getElementById("contactsDrawer").classList.add("open");
+}
+
+function renderContactsList() {
+  const list = document.getElementById("contactsList");
+  if (!allContacts.length) {
+    list.innerHTML = '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px">No contacts found.</p>';
+    return;
+  }
+  list.innerHTML = allContacts.map((c, i) => {
+    const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
+    const sub = [c.organization, c.phone].filter(Boolean).join(" · ");
+    const selected = selectedContacts.has(i);
+    return `<div onclick="toggleContact(${i})" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:10px;border:1.5px solid ${selected ? '#005030' : 'var(--border)'};cursor:pointer;transition:border-color 0.15s">
+      <div style="width:20px;height:20px;border-radius:50%;border:2px solid ${selected ? '#005030' : 'var(--border)'};background:${selected ? '#005030' : 'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">
+        ${selected ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' : ''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+        ${sub ? `<div style="font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</div>` : ''}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleContact(i) {
+  if (selectedContacts.has(i)) {
+    selectedContacts.delete(i);
+  } else {
+    selectedContacts.add(i);
+  }
+  const btn = document.getElementById("contactsImportBtn");
+  btn.disabled = selectedContacts.size === 0;
+  btn.style.opacity = selectedContacts.size === 0 ? "0.5" : "1";
+  btn.textContent = selectedContacts.size > 0
+    ? "Import " + selectedContacts.size + " contact" + (selectedContacts.size > 1 ? "s" : "")
+    : "Import selected";
+  renderContactsList();
+}
+
+async function importSelectedContacts() {
+  if (!selectedContacts.size) return;
+  const btn = document.getElementById("contactsImportBtn");
+  btn.disabled = true;
+  btn.textContent = "Importing…";
+
+  const toImport = [...selectedContacts].map(i => allContacts[i]);
+  let success = 0;
+
+  for (const c of toImport) {
+    const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          cell: c.phone || "",
+          office: "",
+          group: c.organization || ""
+        })
+      });
+      success++;
+    } catch(e) { continue; }
+  }
+
+  const statusEl = document.getElementById("contactsStatus");
+  statusEl.textContent = success + " contact" + (success !== 1 ? "s" : "") + " imported successfully!";
+  statusEl.className = "form-status success";
+
+  setTimeout(() => {
+    closeContacts();
+    loadData(true);
+  }, 1800);
+}
+
+function closeContacts() {
+  document.getElementById("contactsDrawer").classList.remove("open");
+  document.getElementById("contactsOverlay").classList.remove("open");
+  document.getElementById("contactsStatus").textContent = "";
+  selectedContacts = new Set();
 }
 
 setInterval(loadData, 5 * 60 * 1000);
