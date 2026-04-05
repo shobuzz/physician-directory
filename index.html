@@ -613,10 +613,19 @@ function importFromContacts() {
   }
 }
 
-// Called by Swift with the contacts array
+// Called by Swift with fresh contacts every time
 function receiveContacts(contacts) {
-  allContacts = contacts.filter(c => c.firstName || c.lastName);
+  // Always reset — ensures fresh list every import
+  allContacts = [];
   selectedContacts = new Set();
+  allContacts = contacts.filter(c => c.firstName || c.lastName);
+  // Reset import button
+  const btn = document.getElementById("contactsImportBtn");
+  btn.disabled = true;
+  btn.style.opacity = "0.5";
+  btn.textContent = "Import selected";
+  document.getElementById("contactsStatus").textContent = "";
+  document.getElementById("contactsStatus").className = "form-status";
   renderContactsList();
   document.getElementById("contactsOverlay").classList.add("open");
   document.getElementById("contactsDrawer").classList.add("open");
