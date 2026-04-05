@@ -632,7 +632,19 @@ let selectedContacts = new Set();
 
 function importFromContacts() {
   closeDrawer();
-  // Tell Swift to request contacts access and fetch contacts
+  // Clear old contacts so stale data never shows
+  allContacts = [];
+  selectedContacts = new Set();
+  document.getElementById("contactsList").innerHTML = 
+    '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px">Loading contacts…</p>';
+  document.getElementById("contactsImportBtn").disabled = true;
+  document.getElementById("contactsImportBtn").style.opacity = "0.5";
+  document.getElementById("contactsImportBtn").textContent = "Import selected";
+  document.getElementById("contactsStatus").textContent = "";
+  // Open drawer immediately so user sees loading state
+  document.getElementById("contactsOverlay").classList.add("open");
+  document.getElementById("contactsDrawer").classList.add("open");
+  // Tell Swift to fetch fresh contacts
   if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.importContacts) {
     window.webkit.messageHandlers.importContacts.postMessage("fetch");
   } else {
@@ -642,20 +654,16 @@ function importFromContacts() {
 
 // Called by Swift with fresh contacts every time
 function receiveContacts(contacts) {
-  // Always reset — ensures fresh list every import
-  allContacts = [];
-  selectedContacts = new Set();
   allContacts = contacts.filter(c => c.firstName || c.lastName);
-  // Reset import button
+  selectedContacts = new Set();
   const btn = document.getElementById("contactsImportBtn");
   btn.disabled = true;
   btn.style.opacity = "0.5";
   btn.textContent = "Import selected";
   document.getElementById("contactsStatus").textContent = "";
   document.getElementById("contactsStatus").className = "form-status";
+  // Drawer is already open — just refresh the list
   renderContactsList();
-  document.getElementById("contactsOverlay").classList.add("open");
-  document.getElementById("contactsDrawer").classList.add("open");
 }
 
 function renderContactsList() {
@@ -725,7 +733,8 @@ async function importSelectedContacts() {
         name: name,
         cell: c.phone || "",
         office: "",
-        group: c.organization || ""
+        group: c.organization || "",
+        rowIndex: -1  // not yet in sheet, use name fallback for delete/edit
       });
     } catch(e) { continue; }
   }
@@ -742,6 +751,8 @@ async function importSelectedContacts() {
 
   setTimeout(() => {
     closeContacts();
+    // Reload after delay so sheet updates and doctors get proper rowIndex for delete/edit
+    setTimeout(() => loadData(false), 8000);
   }, 1500);
 }
 
@@ -789,7 +800,7 @@ async function proceedDelete() {
     const params = new URLSearchParams({
       action: "delete",
       name: doc.name,
-      rowIndex: doc.rowIndex || ""
+      rowIndex: (doc.rowIndex && doc.rowIndex > 0) ? doc.rowIndex : ""
     });
     await fetch(APPS_SCRIPT_URL + "?" + params.toString(), {
       method: "GET",
