@@ -22,10 +22,10 @@
     --safe-bot: env(safe-area-inset-bottom, 0px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; padding-top: 230px; }
 
   /* ── Header ── */
-  .header { background: #1a1a1a; border-bottom: 2px solid #F47321; padding: calc(var(--safe-top) + 12px) 20px 14px; position: sticky; top: 0; z-index: 100; }
+  .header { background: #1a1a1a; border-bottom: 2px solid #F47321; padding: calc(var(--safe-top) + 12px) 20px 14px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; color: #FFFFFF; }
   .header-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
@@ -49,19 +49,19 @@
   .clear-btn.visible { display: flex; }
 
   /* ── Status ── */
-  .status-bar { display: flex; align-items: center; gap: 7px; padding: 10px 20px 0; font-size: 12px; color: var(--text3); position: sticky; top: 0; z-index: 98; background: var(--bg); }
+  .status-bar { display: flex; align-items: center; gap: 7px; padding: 10px 20px 8px; font-size: 12px; color: var(--text3); position: fixed; top: 152px; left: 0; right: 0; z-index: 98; background: var(--bg); }
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.4s; }
   .status-dot.live { background: #276749; }
   .status-dot.cached { background: #e67e22; }
 
   /* ── Filters ── */
-  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px; scrollbar-width: none; position: fixed; top: 148px; left: 0; right: 0; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px; scrollbar-width: none; position: fixed; top: 190px; left: 0; right: 0; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
   .filters::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .chip.active { background: #005030; border-color: #005030; color: white; }
 
   /* ── List ── */
-  .list-wrap { padding: 110px 16px calc(var(--safe-bot) + 80px); display: flex; flex-direction: column; gap: 10px; }
+  .list-wrap { padding: 240px 16px calc(var(--safe-bot) + 80px); display: flex; flex-direction: column; gap: 10px; }
   .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); padding: 2px 4px 8px; }
 
   /* ── Cards ── */
@@ -377,13 +377,40 @@ const iconSMS  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" st
 const iconDesk = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>`;
 
 function makeBtn(cls, href, icon, title, num) {
-  return `<a class="action-btn ${cls}" href="${href}">
+  const scheme = href.split(":")[0];
+  const number = href.split(":")[1] || "";
+  const cleaned = number.replace(/[^0-9+]/g, "");
+  let action = "";
+  if (scheme === "tel") {
+    action = `onclick="nativeCall('${cleaned}');return false;"`;
+  } else if (scheme === "sms") {
+    action = `onclick="nativeText('${cleaned}');return false;"`;
+  }
+  return `<a class="action-btn ${cls}" href="${href}" ${action}>
     ${icon}
     <span class="btn-label">
       <span class="btn-title">${title}</span>
       ${num ? `<span class="btn-num">${num}</span>` : ""}
     </span>
   </a>`;
+}
+
+function nativeCall(number) {
+  // Try webkit message handler first (native app)
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.phoneCall) {
+    window.webkit.messageHandlers.phoneCall.postMessage(number);
+  } else {
+    // Fallback for browser
+    window.location.href = "tel:" + number;
+  }
+}
+
+function nativeText(number) {
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sendSMS) {
+    window.webkit.messageHandlers.sendSMS.postMessage(number);
+  } else {
+    window.location.href = "sms:" + number;
+  }
 }
 
 function render() {
