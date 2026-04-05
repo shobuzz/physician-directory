@@ -49,19 +49,19 @@
   .clear-btn.visible { display: flex; }
 
   /* ── Status ── */
-  .status-bar { display: flex; align-items: center; gap: 7px; padding: 10px 20px 0; font-size: 12px; color: var(--text3); }
+  .status-bar { display: flex; align-items: center; gap: 7px; padding: 10px 20px 0; font-size: 12px; color: var(--text3); position: sticky; top: 0; z-index: 98; background: var(--bg); }
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.4s; }
   .status-dot.live { background: #276749; }
   .status-dot.cached { background: #e67e22; }
 
   /* ── Filters ── */
-  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px; scrollbar-width: none; position: sticky; top: 97px; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px; scrollbar-width: none; position: fixed; top: 97px; left: 0; right: 0; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
   .filters::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .chip.active { background: #005030; border-color: #005030; color: white; }
 
   /* ── List ── */
-  .list-wrap { padding: 14px 16px calc(var(--safe-bot) + 80px); display: flex; flex-direction: column; gap: 10px; }
+  .list-wrap { padding: 62px 16px calc(var(--safe-bot) + 80px); display: flex; flex-direction: column; gap: 10px; }
   .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text3); padding: 2px 4px 8px; }
 
   /* ── Cards ── */
@@ -138,11 +138,6 @@
 </style>
 </head>
 <body>
-
-<div class="install-banner" id="installBanner">
-  <span>Tap Share → "Add to Home Screen" for quick access</span>
-  <button onclick="this.parentElement.classList.remove('show')">Got it</button>
-</div>
 
 <div class="header">
   <div class="header-top">
