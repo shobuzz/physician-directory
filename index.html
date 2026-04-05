@@ -632,19 +632,7 @@ let selectedContacts = new Set();
 
 function importFromContacts() {
   closeDrawer();
-  // Clear old contacts so stale data never shows
-  allContacts = [];
-  selectedContacts = new Set();
-  document.getElementById("contactsList").innerHTML = 
-    '<p style="text-align:center;color:var(--text3);font-size:13px;padding:20px">Loading contacts…</p>';
-  document.getElementById("contactsImportBtn").disabled = true;
-  document.getElementById("contactsImportBtn").style.opacity = "0.5";
-  document.getElementById("contactsImportBtn").textContent = "Import selected";
-  document.getElementById("contactsStatus").textContent = "";
-  // Open drawer immediately so user sees loading state
-  document.getElementById("contactsOverlay").classList.add("open");
-  document.getElementById("contactsDrawer").classList.add("open");
-  // Tell Swift to fetch fresh contacts
+  // Tell Swift to open the native iOS contact picker
   if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.importContacts) {
     window.webkit.messageHandlers.importContacts.postMessage("fetch");
   } else {
@@ -652,7 +640,7 @@ function importFromContacts() {
   }
 }
 
-// Called by Swift with fresh contacts every time
+// Called by Swift with fresh contacts every time (custom picker flow)
 function receiveContacts(contacts) {
   allContacts = contacts.filter(c => c.firstName || c.lastName);
   selectedContacts = new Set();
@@ -662,8 +650,52 @@ function receiveContacts(contacts) {
   btn.textContent = "Import selected";
   document.getElementById("contactsStatus").textContent = "";
   document.getElementById("contactsStatus").className = "form-status";
-  // Drawer is already open — just refresh the list
   renderContactsList();
+}
+
+// Called by Swift after user picks contacts from native iOS picker
+async function receiveSelectedContacts(contacts) {
+  if (!contacts || contacts.length === 0) return;
+
+  let success = 0;
+  const newDoctors = [];
+
+  for (const c of contacts) {
+    const name = [c.firstName, c.lastName].filter(Boolean).join(" ");
+    if (!name) continue;
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          cell: c.phone || "",
+          office: "",
+          group: c.organization || ""
+        })
+      });
+      success++;
+      newDoctors.push({
+        name, cell: c.phone || "", office: "", group: c.organization || "", rowIndex: -1
+      });
+    } catch(e) { continue; }
+  }
+
+  if (newDoctors.length > 0) {
+    doctors = [...doctors, ...newDoctors];
+    render();
+  }
+
+  // Show success briefly
+  if (success > 0) {
+    const toast = document.createElement("div");
+    toast.textContent = success + " contact" + (success !== 1 ? "s" : "") + " added!";
+    toast.style.cssText = "position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#005030;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:9999;font-family:'DM Sans',sans-serif";
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+    setTimeout(() => loadData(false), 8000);
+  }
 }
 
 function renderContactsList() {
