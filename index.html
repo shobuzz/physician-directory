@@ -55,7 +55,7 @@
   .status-dot.cached { background: #e67e22; }
 
   /* ── Filters ── */
-  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px 0; scrollbar-width: none; }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 12px 20px; scrollbar-width: none; position: sticky; top: 97px; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
   .filters::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .chip.active { background: #005030; border-color: #005030; color: white; }
