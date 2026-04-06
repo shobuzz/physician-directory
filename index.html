@@ -25,7 +25,7 @@
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100dvh; overflow-x: hidden; padding-top: 120px; }
 
   /* ── Header ── */
-  .header { background: #1a1a1a; border-bottom: 2px solid #F47321; padding: calc(var(--safe-top) + 64px) 20px 14px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+  .header { background: #1a1a1a; border-bottom: 2px solid #F47321; padding: calc(var(--safe-top) + 54px) 20px 14px; position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
   .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .header-title { font-size: 20px; font-weight: 600; letter-spacing: -0.4px; color: #FFFFFF; }
   .header-sub { font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 1px; }
@@ -49,13 +49,13 @@
   .clear-btn.visible { display: flex; }
 
   /* ── Status ── */
-  .status-bar { display: flex; align-items: center; gap: 7px; padding: 8px 20px; font-size: 12px; color: var(--text3); position: fixed; top: 180px; left: 0; right: 0; z-index: 98; background: var(--bg); }
+  .status-bar { display: flex; align-items: center; gap: 7px; padding: 8px 20px; font-size: 12px; color: var(--text3); position: fixed; top: 170px; left: 0; right: 0; z-index: 98; background: var(--bg); }
   .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; transition: background 0.4s; }
   .status-dot.live { background: #276749; }
   .status-dot.cached { background: #e67e22; }
 
   /* ── Filters ── */
-  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 10px 20px; scrollbar-width: none; position: fixed; top: 216px; left: 0; right: 0; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .filters { display: flex; gap: 8px; overflow-x: auto; padding: 10px 20px; scrollbar-width: none; position: fixed; top: 201px; left: 0; right: 0; z-index: 99; background: var(--bg); border-bottom: 1px solid var(--border); }
   .filters::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; border: 1.5px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
   .chip.active { background: #005030; border-color: #005030; color: white; }
@@ -191,7 +191,7 @@
   <span id="statusText">Loading directory…</span>
 </div>
 
-<div style="position:fixed;top:180px;left:0;right:0;height:100px;background:var(--bg);z-index:96;pointer-events:none"></div>
+<div style="position:fixed;top:170px;left:0;right:0;height:100px;background:var(--bg);z-index:96;pointer-events:none"></div>
 <div class="filters" id="filterBar"></div>
 <div class="list-wrap" id="listWrap"></div>
 
