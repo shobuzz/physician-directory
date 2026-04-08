@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Florida Provider Finder — NPI Registry</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F4F0; --surface: #fff; --border: #E2E0DA;
+    --text: #1A1916; --text2: #6B6960; --text3: #9B9A95;
+    --accent: #005030; --accent-light: #E6F0EC;
+    --orange: #F47321; --orange-light: #FEF0E6;
+    --radius: 12px; --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); padding: 24px 20px 60px; max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; }
+  .controls { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 180px; }
+  .field label { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text2); }
+  .field select, .field input { padding: 9px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); outline: none; }
+  .field select:focus, .field input:focus { border-color: var(--accent); }
+  .btn { padding: 10px 20px; border-radius: var(--radius-sm); border: none; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-export { background: var(--orange); color: white; }
+  .btn-export:disabled { opacity: 0.4; cursor: not-allowed; }
+  .progress-box { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; display: none; }
+  .progress-box.show { display: block; }
+  .progress-bar-wrap { background: var(--bg); border-radius: 20px; height: 8px; margin: 12px 0 8px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 20px; transition: width 0.3s; width: 0%; }
+  .log { background: var(--bg); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text2); margin-top: 10px; max-height: 100px; overflow-y: auto; line-height: 1.8; }
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .count-pill { background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+  .search-box { padding: 8px 12px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); background: var(--bg); font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); outline: none; min-width: 200px; }
+  .table-wrap { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: auto; max-height: 600px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { position: sticky; top: 0; background: var(--bg); z-index: 1; }
+  th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: var(--accent-light); color: var(--accent); }
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 14px; line-height: 1.7; }
+  .note { font-size: 12px; color: var(--text3); margin-top: 14px; line-height: 1.7; }
+  .note a { color: var(--accent); }
+  .pager { display: flex; align-items: center; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .pager-btn { padding: 7px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; }
+  .pager-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pager-info { font-size: 13px; color: var(--text2); font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+
+<h1>Florida Provider Finder</h1>
+<p class="sub">Search any specialty across all Florida providers from the free CMS NPI Registry</p>
+
+<div class="controls">
+  <div class="field" style="min-width:260px">
+    <label>Specialty</label>
+    <select id="specialty">
+      <optgroup label="Primary Care">
+        <option value="Internal Medicine">Internal Medicine</option>
+        <option value="Family Medicine">Family Medicine</option>
+        <option value="General Practice">General Practice</option>
+        <option value="Geriatric Medicine">Geriatric Medicine</option>
+        <option value="Preventive Medicine">Preventive Medicine</option>
+      </optgroup>
+      <optgroup label="Common Referral Targets">
+        <option value="Cardiology">Cardiology</option>
+        <option value="Neurology">Neurology</option>
+        <option value="Neurological Surgery">Neurological Surgery</option>
+        <option value="Orthopedic Surgery">Orthopedic Surgery</option>
+        <option value="Gastroenterology">Gastroenterology</option>
+        <option value="Pulmonary Disease">Pulmonary Disease</option>
+        <option value="Endocrinology">Endocrinology</option>
+        <option value="Nephrology">Nephrology</option>
+        <option value="Rheumatology">Rheumatology</option>
+        <option value="Hematology">Hematology</option>
+        <option value="Oncology">Oncology</option>
+        <option value="Urology">Urology</option>
+        <option value="Dermatology">Dermatology</option>
+        <option value="Ophthalmology">Ophthalmology</option>
+        <option value="Otolaryngology">Otolaryngology</option>
+        <option value="Psychiatry">Psychiatry</option>
+        <option value="Physical Medicine and Rehabilitation">Physical Medicine &amp; Rehab</option>
+        <option value="Infectious Disease">Infectious Disease</option>
+        <option value="Allergy and Immunology">Allergy &amp; Immunology</option>
+      </optgroup>
+      <optgroup label="Surgery">
+        <option value="Surgery">General Surgery</option>
+        <option value="Thoracic Surgery">Thoracic Surgery</option>
+        <option value="Vascular Surgery">Vascular Surgery</option>
+        <option value="Plastic Surgery">Plastic Surgery</option>
+        <option value="Colon and Rectal Surgery">Colon &amp; Rectal Surgery</option>
+        <option value="Hand Surgery">Hand Surgery</option>
+      </optgroup>
+      <optgroup label="Women's Health">
+        <option value="Obstetrics and Gynecology">Obstetrics &amp; Gynecology</option>
+        <option value="Gynecologic Oncology">Gynecologic Oncology</option>
+        <option value="Maternal and Fetal Medicine">Maternal &amp; Fetal Medicine</option>
+        <option value="Reproductive Endocrinology">Reproductive Endocrinology</option>
+      </optgroup>
+      <optgroup label="Pediatrics">
+        <option value="Pediatrics">Pediatrics</option>
+        <option value="Pediatric Cardiology">Pediatric Cardiology</option>
+        <option value="Pediatric Surgery">Pediatric Surgery</option>
+        <option value="Neonatal-Perinatal Medicine">Neonatology</option>
+      </optgroup>
+      <optgroup label="Emergency &amp; Critical Care">
+        <option value="Emergency Medicine">Emergency Medicine</option>
+        <option value="Critical Care Medicine">Critical Care Medicine</option>
+        <option value="Anesthesiology">Anesthesiology</option>
+        <option value="Pain Medicine">Pain Medicine</option>
+      </optgroup>
+      <optgroup label="Radiology &amp; Pathology">
+        <option value="Diagnostic Radiology">Diagnostic Radiology</option>
+        <option value="Radiation Oncology">Radiation Oncology</option>
+        <option value="Interventional Radiology">Interventional Radiology</option>
+        <option value="Pathology">Pathology</option>
+        <option value="Nuclear Medicine">Nuclear Medicine</option>
+      </optgroup>
+      <optgroup label="Advanced Practice">
+        <option value="Nurse Practitioner">Nurse Practitioner</option>
+        <option value="Physician Assistant">Physician Assistant</option>
+        <option value="Clinical Nurse Specialist">Clinical Nurse Specialist</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="field">
+    <label>City (optional)</label>
+    <input type="text" id="city" placeholder="Blank = all Florida">
+  </div>
+  <div class="field" style="min-width:90px;max-width:110px">
+    <label>Max results</label>
+    <select id="maxResults">
+      <option value="200">200</option>
+      <option value="500">500</option>
+      <option value="1000" selected>1000</option>
+      <option value="9999">All</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" id="searchBtn" onclick="startSearch()">Search</button>
+</div>
+
+<div class="progress-box" id="progressBox">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <span id="progressText" style="font-size:13px;color:var(--text2)">Starting…</span>
+    <span id="progressCount" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--accent);font-weight:600">0 found</span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="log" id="logBox"></div>
+</div>
+
+<div class="toolbar" id="toolbar" style="display:none">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="count-pill" id="countPill">0 providers</div>
+    <input type="search" class="search-box" id="tableSearch" placeholder="Filter by name, city, zip…" oninput="filterTable(this.value)">
+  </div>
+  <button class="btn btn-export" onclick="exportCSV()">⬇ Download CSV for Google Sheets</button>
+</div>
+
+<div class="table-wrap" id="tableWrap">
+  <div class="empty">Select a specialty and click Search to fetch Florida providers from the NPI Registry.<br><br>⚠️ Must be opened from a hosted URL — upload to GitHub Pages first.</div>
+</div>
+
+<div class="pager" id="pager" style="display:none">
+  <button class="pager-btn" id="prevBtn" onclick="changePage(-1)">← Prev</button>
+  <span class="pager-info" id="pagerInfo"></span>
+  <button class="pager-btn" id="nextBtn" onclick="changePage(1)">Next →</button>
+</div>
+
+<p class="note">Data from the <a href="https://npiregistry.cms.hhs.gov" target="_blank">CMS NPPES NPI Registry</a> — public domain under FOIA, updated daily. Office phone numbers from provider registrations. Cell numbers not publicly available. CSV columns match your Google Sheet format.</p>
+
+<script>
+const NPI_BASE = "https://npiregistry.cms.hhs.gov/api/?version=2.1&enumeration_type=NPI-1&state=FL";
+const PROXIES = [
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => url
+];
+
+let allResults = [], filteredResults = [], page = 0;
+const PER_PAGE = 50;
+
+function log(msg) {
+  const box = document.getElementById("logBox");
+  box.innerHTML += msg + "<br>";
+  box.scrollTop = box.scrollHeight;
+}
+
+async function fetchWithProxy(url) {
+  for (const [i, proxy] of PROXIES.entries()) {
+    try {
+      const proxied = proxy(url);
+      const res = await fetch(proxied, { signal: AbortSignal.timeout(12000) });
+      if (!res.ok) { log(`Proxy ${i+1} failed: HTTP ${res.status}`); continue; }
+      const text = await res.text();
+      if (!text.trim().startsWith("{")) { log(`Proxy ${i+1} bad response`); continue; }
+      const data = JSON.parse(text);
+      log(`✓ Proxy ${i+1} success — ${(data.results||[]).length} results`);
+      return data;
+    } catch(e) {
+      log(`Proxy ${i+1} error: ${e.message}`);
+      continue;
+    }
+  }
+  return null;
+}
+
+async function startSearch() {
+  const specialty = document.getElementById("specialty").value;
+  const city = document.getElementById("city").value.trim();
+  const maxResults = parseInt(document.getElementById("maxResults").value);
+  const btn = document.getElementById("searchBtn");
+
+  btn.disabled = true;
+  btn.textContent = "Fetching…";
+  allResults = []; filteredResults = []; page = 0;
+
+  document.getElementById("toolbar").style.display = "none";
+  document.getElementById("pager").style.display = "none";
+  document.getElementById("progressBox").classList.add("show");
+  document.getElementById("logBox").innerHTML = "";
+  document.getElementById("tableWrap").innerHTML = "";
+
+  try {
+    // Get total count first
+    let url = `${NPI_BASE}&limit=1&skip=0&taxonomy_description=${encodeURIComponent(specialty)}`;
+    if (city) url += `&city=${encodeURIComponent(city)}`;
+
+    log(`Fetching count for: ${specialty}${city ? " in " + city : " statewide"}…`);
+    document.getElementById("progressText").textContent = `Connecting to NPI Registry…`;
+
+    const first = await fetchWithProxy(url);
+    if (!first) throw new Error("All proxies failed. Try opening from GitHub Pages URL.");
+
+    const reportedTotal = first.result_count || 0;
+    const total = Math.min(reportedTotal, maxResults);
+    log(`NPI reports ${reportedTotal} total providers — fetching up to ${total}`);
+    
+    // NPI API caps result_count display at 200 for text searches
+    // Use a higher estimate if we hit the cap
+    const fetchTotal = reportedTotal >= 200 && maxResults > 200 
+      ? Math.min(maxResults, 10000) 
+      : total;
+    log(`Will paginate up to ${fetchTotal} results…`);
+
+    if (total === 0) {
+      document.getElementById("progressBox").classList.remove("show");
+      document.getElementById("tableWrap").innerHTML = '<div class="empty">No providers found for this specialty in Florida.<br>Try a different specialty or remove the city filter.</div>';
+      btn.disabled = false; btn.textContent = "Search";
+      return;
+    }
+
+    const batchSize = 200;
+    let skip = 0;
+
+    while (skip < fetchTotal) {
+      const batchUrl = `${NPI_BASE}&limit=${batchSize}&skip=${skip}&taxonomy_description=${encodeURIComponent(specialty)}` + (city ? `&city=${encodeURIComponent(city)}` : "");
+      log(`Fetching batch: ${skip}–${Math.min(skip+batchSize, total)} of ${total}…`);
+
+      document.getElementById("progressText").textContent = `Fetching ${specialty}… ${allResults.length} found so far`;
+      document.getElementById("progressBar").style.width = fetchTotal > 0 ? Math.round((skip/fetchTotal)*100) + "%" : "50%";
+      document.getElementById("progressCount").textContent = allResults.length + " found";
+
+      const data = await fetchWithProxy(batchUrl);
+      if (!data || !data.results?.length) { log("Empty batch — reached end of results."); break; }
+      if (data.results.length < batchSize) { 
+        for (const r of data.results) allResults.push(parseProvider(r, specialty));
+        log(`Last batch had ${data.results.length} results — done!`); 
+        break; 
+      }
+
+      for (const r of data.results) allResults.push(parseProvider(r, specialty));
+      skip += batchSize;
+
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    allResults.sort((a,b) => a.lastName.localeCompare(b.lastName));
+    filteredResults = [...allResults];
+
+    document.getElementById("progressBar").style.width = "100%";
+    document.getElementById("progressText").textContent = "Done!";
+    document.getElementById("progressCount").textContent = allResults.length + " found";
+
+    setTimeout(() => {
+      document.getElementById("progressBox").classList.remove("show");
+      document.getElementById("countPill").textContent = allResults.length + " providers";
+      document.getElementById("toolbar").style.display = "flex";
+      renderTable();
+    }, 800);
+
+  } catch(e) {
+    log("ERROR: " + e.message);
+    document.getElementById("progressText").textContent = "Failed — " + e.message;
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Search";
+}
+
+function parseProvider(r, specHint) {
+  const b = r.basic || {};
+  const firstName = b.first_name || "";
+  const lastName = b.last_name || "";
+  const fullName = [b.first_name, b.middle_name, b.last_name].filter(Boolean).join(" ");
+  const credential = b.credential || "";
+  const practiceAddr = (r.addresses||[]).find(a=>a.address_purpose==="LOCATION") || r.addresses?.[0] || {};
+  const phone = (practiceAddr.telephone_number||"").replace(/\s+/g,"");
+  const addrLine = [practiceAddr.address_1, practiceAddr.city, practiceAddr.state, practiceAddr.postal_code].filter(Boolean).join(", ");
+  const taxonomy = (r.taxonomies||[]).find(t=>t.primary) || r.taxonomies?.[0] || {};
+  return {
+    npi: r.number, firstName, lastName, fullName, credential,
+    specialty: taxonomy.desc || specHint,
+    phone, address: addrLine,
+    city: practiceAddr.city||"", state: practiceAddr.state||"", zip: practiceAddr.postal_code||""
+  };
+}
+
+function filterTable(q) {
+  const query = q.toLowerCase();
+  filteredResults = !query ? [...allResults] : allResults.filter(r =>
+    r.fullName.toLowerCase().includes(query) ||
+    r.city.toLowerCase().includes(query) ||
+    r.specialty.toLowerCase().includes(query) ||
+    r.phone.includes(query) ||
+    r.zip.includes(query)
+  );
+  page = 0;
+  document.getElementById("countPill").textContent = filteredResults.length + " providers";
+  renderTable();
+}
+
+function renderTable() {
+  const start = page * PER_PAGE;
+  const slice = filteredResults.slice(start, start + PER_PAGE);
+  const totalPages = Math.ceil(filteredResults.length / PER_PAGE);
+
+  if (!slice.length) {
+    document.getElementById("tableWrap").innerHTML = '<div class="empty">No results. Try clearing the filter.</div>';
+    document.getElementById("pager").style.display = "none";
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th>#</th><th>Name</th><th>Credentials</th><th>Specialty</th>
+    <th>Office Phone</th><th>City</th><th>Zip</th><th>NPI</th>
+  </tr></thead><tbody>`;
+
+  slice.forEach((r, i) => {
+    html += `<tr>
+      <td style="color:var(--text3);font-family:'DM Mono',monospace;font-size:11px">${start+i+1}</td>
+      <td><strong>${r.fullName}</strong></td>
+      <td style="color:var(--text2);font-size:12px">${r.credential}</td>
+      <td><span class="tag">${r.specialty}</span></td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px">${r.phone||"—"}</td>
+      <td style="font-size:12px">${r.city}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${r.zip}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${r.npi}</td>
+    </tr>`;
+  });
+
+  html += "</tbody></table>";
+  document.getElementById("tableWrap").innerHTML = html;
+
+  if (filteredResults.length > PER_PAGE) {
+    document.getElementById("pager").style.display = "flex";
+    document.getElementById("pagerInfo").textContent = `Page ${page+1} of ${totalPages} · ${filteredResults.length} total`;
+    document.getElementById("prevBtn").disabled = page === 0;
+    document.getElementById("nextBtn").disabled = page >= totalPages-1;
+  } else {
+    document.getElementById("pager").style.display = "none";
+  }
+}
+
+function changePage(dir) {
+  page += dir;
+  renderTable();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function exportCSV() {
+  if (!filteredResults.length) return;
+  const headers = ["Physician Name","Phone Number","Office Number","Physician Group","Specialty","City","State","Zip","NPI"];
+  const rows = filteredResults.map(r => {
+    const name = [r.fullName, r.credential].filter(Boolean).join(", ");
+    return [name,"",r.phone,"",r.specialty,r.city,r.state,r.zip,r.npi]
+      .map(v=>`"${(v||"").replace(/"/g,'""')}"`).join(",");
+  });
+  const csv = [headers.join(","),...rows].join("\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "florida_providers.csv";
+  a.click();
+}
+</script>
+</body>
+</html>
